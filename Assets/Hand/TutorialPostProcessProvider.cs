@@ -74,20 +74,19 @@ public class TutorialPostProcessProvider : MonoBehaviour
         _middleMetacarpal = _middle.bones[(int)Bone.BoneType.TYPE_METACARPAL];
         _ringMetacarpal = _ring.bones[(int)Bone.BoneType.TYPE_METACARPAL];
         _pinkyMetacarpal = _pinky.bones[(int)Bone.BoneType.TYPE_METACARPAL];
-        /*
+
         //Use the _indexFinger to access the bone array, then get the metacarpal by index
-        _thumbMetacarpal = _thumb.bones[0];
-        _indexMetacarpal = _index.bones[1];
-        _middleMetacarpal = _middle.bones[2];
-        _ringMetacarpal = _ring.bones[3];
-        _pinkyMetacarpal = _pinky.bones[4];
-        */
+        LEAP_BONE _indexMetacarpal = _index.bones[0];
+        LEAP_BONE _indexProximal = _index.bones[1];
+        LEAP_BONE _indexIntermediate = _index.bones[2];
+        LEAP_BONE _indexDistal = _index.bones[3];
+        
         
         LeapTransform _basis = _thumbMetacarpal.Basis;
         Vector3 xBasis = _basis.xBasis;
         string xBasisString = xBasis.ToString();
         
-        string _info = "WhichHand:" + _WhichHand + ",Hand ID: " + _hand.Id + ",Palm Position: " + _hand.PalmPosition + ",xBasis" + xBasisString + "\n";
+        string _info = "WhichHand:" + _WhichHand + ",Hand ID: " + _hand.Id + ",Palm Position: " + _hand.PalmPosition + ",xBasis" + xBasisString + "index" + _indexDistal.next_joint.x + "\n";
 
         return _info;
     }
