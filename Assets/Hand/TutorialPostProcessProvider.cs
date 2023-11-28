@@ -68,6 +68,25 @@ public class TutorialPostProcessProvider : MonoBehaviour
         Bone _ringMetacarpal = _ring.Bone(Bone.BoneType.TYPE_METACARPAL);
         Bone _pinkyMetacarpal = _pinky.Bone(Bone.BoneType.TYPE_METACARPAL);
 
+        Bone _thumbProximal = _thumb.Bone(Bone.BoneType.TYPE_PROXIMAL);
+        Bone _indexProximal = _index.Bone(Bone.BoneType.TYPE_PROXIMAL);
+        Bone _middleProximal = _middle.Bone(Bone.BoneType.TYPE_PROXIMAL);
+        Bone _ringProximal = _ring.Bone(Bone.BoneType.TYPE_PROXIMAL);
+        Bone _pinkyProximal = _pinky.Bone(Bone.BoneType.TYPE_PROXIMAL);
+
+        Bone _thumbIntermediate = _thumb.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
+        Bone _indexIntermediate = _index.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
+        Bone _middleIntermediate = _middle.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
+        Bone _ringIntermediate = _ring.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
+        Bone _pinkyIntermediate = _pinky.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
+
+        Bone _thumbDistal = _thumb.Bone(Bone.BoneType.TYPE_DISTAL);
+        Bone _indexDistal = _index.Bone(Bone.BoneType.TYPE_DISTAL);
+        Bone _middleDistal = _middle.Bone(Bone.BoneType.TYPE_DISTAL);
+        Bone _ringDistal = _ring.Bone(Bone.BoneType.TYPE_DISTAL);
+        Bone _pinkyDistal = _pinky.Bone(Bone.BoneType.TYPE_DISTAL);
+
+        /*
         //Use the _indexFinger to access the bone array, then get the Metacarpal bone from it using the BoneType Enum cast to an int
         _thumbMetacarpal = _thumb.bones[(int)Bone.BoneType.TYPE_METACARPAL];
         _indexMetacarpal = _index.bones[(int)Bone.BoneType.TYPE_METACARPAL];
@@ -80,13 +99,19 @@ public class TutorialPostProcessProvider : MonoBehaviour
         LEAP_BONE _indexProximal = _index.bones[1];
         LEAP_BONE _indexIntermediate = _index.bones[2];
         LEAP_BONE _indexDistal = _index.bones[3];
-        
-        
-        LeapTransform _basis = _thumbMetacarpal.Basis;
+        */
+
+        Bone _indexDistal1 = _index.bones[3];
+
+        LeapTransform _basis = _indexDistal.Basis;
         Vector3 xBasis = _basis.xBasis;
         string xBasisString = xBasis.ToString();
-        
-        string _info = "WhichHand:" + _WhichHand + ",Hand ID: " + _hand.Id + ",Palm Position: " + _hand.PalmPosition + ",xBasis" + xBasisString + "index" + _indexDistal.next_joint.x + "\n";
+
+        LeapTransform _basis1 = _indexDistal1.Basis;
+        Vector3 xBasis1 = _basis1.xBasis;
+        string xBasisString1 = xBasis1.ToString();
+
+        string _info = "WhichHand:" + _WhichHand + ", Hand ID: " + _hand.Id + ", Palm Position: " + _hand.PalmPosition + ", xBasis" + xBasisString + ", IndexDistal Direction" + _indexDistal.Direction + ", xBasis1" + xBasisString1 + ", IndexDistal1 Direction" + _indexDistal1.Direction + "\n";
 
         return _info;
     }
