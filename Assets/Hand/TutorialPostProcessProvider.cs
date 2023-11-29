@@ -90,7 +90,8 @@ public class TutorialPostProcessProvider : MonoBehaviour
         Vector3 xBasis = _basis.xBasis;
         string xBasisString = xBasis.ToString();
 
-        string _info = "WhichHand:" + _WhichHand + ", Hand ID: " + _hand.Id +  ", xBasis" + xBasisString + ", IndexDistal Direction" + _indexDistal.Direction + "\n";
+        string _info = "WhichHand:" + _WhichHand + ", Hand ID: " + _hand.Id +   ", Angle" + Vector3.Angle(_indexProximal.Direction, _indexMetacarpal.Direction) + "\n"
+            + ", Rotation:" + _indexIntermediate.Rotation.eulerAngles + "\n";
 
         return _info;
     }
