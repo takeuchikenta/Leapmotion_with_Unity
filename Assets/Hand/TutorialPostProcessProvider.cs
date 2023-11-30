@@ -90,8 +90,9 @@ public class TutorialPostProcessProvider : MonoBehaviour
         Vector3 xBasis = _basis.xBasis;
         string xBasisString = xBasis.ToString();
 
-        string _info = "WhichHand:" + _WhichHand + ", Hand ID: " + _hand.Id +   ", Angle" + Vector3.Angle(_indexProximal.Direction, _indexMetacarpal.Direction) + "\n"
-            + ", Rotation:" + _indexIntermediate.Rotation.eulerAngles + "\n";
+        string _info = "WhichHand:" + _WhichHand + ", Hand ID: " + _hand.Id +   ", Angle:" + Vector3.Angle(_indexProximal.Direction, _indexMetacarpal.Direction) + "\n"
+            + ", SignedAngle:" + Vector3.SignedAngle(_indexProximal.Direction, _indexMetacarpal.Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n"
+            + ", radial/ulnar:" + Vector3.SignedAngle(_indexMetacarpal.Direction, _thumbProximal.Direction, _hand.PalmNormal) + ", palmar:" + Vector3.SignedAngle(_indexMetacarpal.Direction, _thumbProximal.Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n";
 
         return _info;
     }
