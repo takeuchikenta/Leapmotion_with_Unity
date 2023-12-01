@@ -10,9 +10,13 @@ public class TutorialPostProcessProvider : MonoBehaviour
 {
     [SerializeField]
     private TextMeshProUGUI cardNameText;
+    [SerializeField]
+    private TextMeshProUGUI MinText;
+    [SerializeField]
+    private TextMeshProUGUI MaxText;
 
     public LeapProvider leapProvider;
-
+    
     private void OnEnable()
     {
         leapProvider.OnUpdateFrame += OnUpdateFrame;
@@ -24,31 +28,59 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
     void OnUpdateFrame(Frame frame)
     {
+        cardNameText.text = GetHandData();
+    }
+
+
+    //Button Setting
+    string Min = "";
+    string Max = "";
+
+    public void Flexion()
+    {
+        Min = GetHandData();
+        MinText.text = "Min:" + Min;
+    }
+
+    public void Save()
+    {
+        Max = GetHandData();
+        MaxText.text = "Min:" + Min + "Max:" + Max;
+    }
+
+    //GetHnad
+    string GetHandData()
+    {
         string info;
-        Hand _rightHand = frame.GetHand(Chirality.Right);
-        Hand _leftHand = frame.GetHand(Chirality.Left);
-        /*
-        if (_rightHand == null && _leftHand == null)
-        {
-            return;
-        }
-        */
+        Hand _rightHand = Hands.Provider.GetHand(Chirality.Right);
+        Hand _leftHand = Hands.Provider.GetHand(Chirality.Left);
+
         if (_rightHand != null && _leftHand != null)
         {
             info = OnUpdateHand(_rightHand, "Right") + OnUpdateHand(_leftHand, "Left");
-            cardNameText.text = info;
+            //cardNameText.text = info;
+            return info;
         }
 
         if (_rightHand != null && _leftHand == null)
         {
             info = OnUpdateHand(_rightHand, "Right");
-            cardNameText.text = info;
+            //cardNameText.text = info;
+            return info;
         }
 
         if (_rightHand == null && _leftHand != null)
         {
             info = OnUpdateHand(_leftHand, "Left");
-            cardNameText.text = info;
+            //cardNameText.text = info;
+            return info;
+        }
+
+        else//if (_rightHand == null && _leftHand == null)
+        {
+            info = "NO HAND";
+            //cardNameText.text = info;
+            return info;
         }
     }
 
