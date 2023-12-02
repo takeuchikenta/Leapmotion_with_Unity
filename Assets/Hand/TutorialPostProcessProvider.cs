@@ -33,47 +33,43 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
 
     //Button Setting
-    string MinrightID = "";
-    string MinleftID = "";
-    string MinID = "";
-    List<List<float>> MinrightAngles;
-    List<List<float>> MinleftAngles;
-    List<List<float>> MinAngles;
-
-    string MaxrightID = "";
-    string MaxleftID = "";
-    string MaxID = "";
-    List<List<float>> MaxrightAngles;
-    List<List<float>> MaxleftAngles;
-    List<List<float>> MaxAngles;
-
+    int MinID;
+    int MaxID;
     string lr = "";
+    List<List<float>> MinAngles;
+    List<List<float>> MaxAngles;
 
     string FlexionOrExtension = "";
     string Min = "";
     string Max = "";
-
-    List<List<float>> rightROM;
-    List<List<float>> leftROM;
     List<List<float>> ROM;
 
     public void Flexion()
     {
         FlexionOrExtension = "flexion";
 
-        List<string> IDList = LeftOrRight().IDList;
+        List<int> IDList = LeftOrRight().IDList;
         List<string> LRList = LeftOrRight().LRList;
         List<List<List<float>>> angleList = LeftOrRight().angleList;
 
         if (IDList.Count == 2)
         {
-            MinrightID = IDList[0];
-            MinleftID = IDList[1];
-            MinrightAngles = angleList[0];
-            MinleftAngles = angleList[1];
+            if(IDList[0] < IDList[1])
+            {
+                MinID = IDList[0];
+                lr = LRList[0];
+                MinAngles = angleList[0];
 
-            Min = "RIGHT ID:" + MinrightID + "Angles:" + MinrightAngles[0][0] + "\n"
-            + "LEFT ID:" + MinleftID + "Angles:" + MinleftAngles[0][0] + "\n";
+                Min = lr + "ID:" + MinID + "Angles:" + MinAngles[0][0] + "\n";
+            }
+            else
+            {
+                MinID = IDList[1];
+                lr = LRList[1];
+                MinAngles = angleList[1];
+
+                Min = lr + "ID:" + MinID + "Angles:" + MinAngles[0][0] + "\n";
+            }
         }
         else
         {
@@ -88,22 +84,32 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
     public void Save()
     {
-        List<string> IDList = LeftOrRight().IDList;
+        List<int> IDList = LeftOrRight().IDList;
         List<string> LRList = LeftOrRight().LRList;
         List<List<List<float>>> angleList = LeftOrRight().angleList;
 
         if (IDList.Count == 2)
         {
-            MaxrightID = IDList[0];
-            MaxleftID = IDList[1];
-            MaxrightAngles = angleList[0];
-            MaxleftAngles = angleList[1];
+            if (IDList[0] < IDList[1])
+            {
+                MaxID = IDList[0];
+                lr = LRList[0];
+                MaxAngles = angleList[0];
 
-            rightROM = CalculateROM(MaxrightAngles, MinrightAngles);
-            leftROM = CalculateROM(MaxleftAngles, MinleftAngles);
+                Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "\n";
+            }
+            else
+            {
+                MaxID = IDList[1];
+                lr = LRList[1];
+                MaxAngles = angleList[1];
 
-            Max = "RIGHT ID:" + MaxrightID + "Angles:" + MaxrightAngles[0][0] + "ROM:" + rightROM[0][0] + "\n"
-            + "LEFT ID:" + MaxleftID + "Angles:" + MaxleftAngles[0][0] + "ROM:" + leftROM[0][0] + "\n";
+                Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "\n";
+            }
+
+            ROM = CalculateROM(MaxAngles, MinAngles);
+
+            Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "ROM:" + ROM[0][0] + "\n";
         }
         else
         {
@@ -118,6 +124,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         MaxText.text = "Min:" + Min + "Max:" + Max;
     }
 
+    //Calculate ROM
     List<List<float>>  CalculateROM(List<List<float>> MaxAngles, List<List<float>> MinAngles)
     {
         List<List<float>> ROM = new List<List<float>>();
@@ -142,20 +149,20 @@ public class TutorialPostProcessProvider : MonoBehaviour
     }
 
     //Recognize Left or Right
-    (List<string> IDList, List<string> LRList, List<List<List<float>>> angleList) LeftOrRight()
+    (List<int> IDList, List<string> LRList, List<List<List<float>>> angleList) LeftOrRight()
     {
         string info;
         Hand _rightHand = Hands.Provider.GetHand(Chirality.Right);
         Hand _leftHand = Hands.Provider.GetHand(Chirality.Left);
 
-        List<string> _IDList = new List<string>();
+        List<int> _IDList = new List<int>();
         List<string> _LRList = new List<string>();
         List<List<List<float>>> _angleList = new List<List<List<float>>>();
 
         if (_rightHand != null && _leftHand != null)
         {
-            _IDList.Add(_rightHand.Id.ToString());
-            _IDList.Add(_leftHand.Id.ToString());
+            _IDList.Add(_rightHand.Id);
+            _IDList.Add(_leftHand.Id);
 
             _LRList.Add("Right");
             _LRList.Add("Left");
@@ -168,7 +175,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
         if (_rightHand != null && _leftHand == null)
         {
-            _IDList.Add(_rightHand.Id.ToString());
+            _IDList.Add(_rightHand.Id);
             _LRList.Add("Right");
             _angleList.Add(GetAngle(_rightHand));
             return (_IDList, _LRList, _angleList);
@@ -176,7 +183,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
         if (_rightHand == null && _leftHand != null)
         {
-            _IDList.Add(_leftHand.Id.ToString());
+            _IDList.Add(_leftHand.Id);
             _LRList.Add("Left");
             _angleList.Add(ChangeToMinus(GetAngle(_leftHand)));
             return (_IDList, _LRList, _angleList);
