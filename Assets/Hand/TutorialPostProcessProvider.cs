@@ -1,5 +1,5 @@
-//using System.Collections;
-//using System.Collections.Generic;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Leap;
 using Leap.Unity;
@@ -16,7 +16,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
     private TextMeshProUGUI MaxText;
 
     public LeapProvider leapProvider;
-    
+
     private void OnEnable()
     {
         leapProvider.OnUpdateFrame += OnUpdateFrame;
@@ -28,104 +28,208 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
     void OnUpdateFrame(Frame frame)
     {
-        cardNameText.text = GetHandData();
+        //cardNameText.text = LeftOrRight();
     }
 
 
     //Button Setting
+    string MinrightID = "";
+    string MinleftID = "";
+    string MinID = "";
+    List<List<float>> MinrightAngles;
+    List<List<float>> MinleftAngles;
+    List<List<float>> MinAngles;
+
+    string MaxrightID = "";
+    string MaxleftID = "";
+    string MaxID = "";
+    List<List<float>> MaxrightAngles;
+    List<List<float>> MaxleftAngles;
+    List<List<float>> MaxAngles;
+
+    string lr = "";
+
+    string FlexionOrExtension = "";
     string Min = "";
     string Max = "";
 
+    List<List<float>> rightROM;
+    List<List<float>> leftROM;
+    List<List<float>> ROM;
+
     public void Flexion()
     {
-        Min = GetHandData();
+        FlexionOrExtension = "flexion";
+
+        List<string> IDList = LeftOrRight().IDList;
+        List<string> LRList = LeftOrRight().LRList;
+        List<List<List<float>>> angleList = LeftOrRight().angleList;
+
+        if (IDList.Count == 2)
+        {
+            MinrightID = IDList[0];
+            MinleftID = IDList[1];
+            MinrightAngles = angleList[0];
+            MinleftAngles = angleList[1];
+
+            Min = "RIGHT ID:" + MinrightID + "Angles:" + MinrightAngles[0][0] + "\n"
+            + "LEFT ID:" + MinleftID + "Angles:" + MinleftAngles[0][0] + "\n";
+        }
+        else
+        {
+            MinID = IDList[0];
+            lr = LRList[0];
+            MinAngles = angleList[0];
+
+            Min = lr + "ID:" + MinID + "Angles:" + MinAngles[0][0] + "\n";
+        }
         MinText.text = "Min:" + Min;
     }
 
     public void Save()
     {
-        Max = GetHandData();
+        List<string> IDList = LeftOrRight().IDList;
+        List<string> LRList = LeftOrRight().LRList;
+        List<List<List<float>>> angleList = LeftOrRight().angleList;
+
+        if (IDList.Count == 2)
+        {
+            MaxrightID = IDList[0];
+            MaxleftID = IDList[1];
+            MaxrightAngles = angleList[0];
+            MaxleftAngles = angleList[1];
+
+            rightROM = CalculateROM(MaxrightAngles, MinrightAngles);
+            leftROM = CalculateROM(MaxleftAngles, MinleftAngles);
+
+            Max = "RIGHT ID:" + MaxrightID + "Angles:" + MaxrightAngles[0][0] + "ROM:" + rightROM[0][0] + "\n"
+            + "LEFT ID:" + MaxleftID + "Angles:" + MaxleftAngles[0][0] + "ROM:" + leftROM[0][0] + "\n";
+        }
+        else
+        {
+            MaxID = IDList[0];
+            lr = LRList[0];
+            MaxAngles = angleList[0];
+
+            ROM = CalculateROM(MaxAngles, MinAngles);
+
+            Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "ROM:" + ROM[0][0] + "\n";
+        }
         MaxText.text = "Min:" + Min + "Max:" + Max;
     }
 
-    //GetHnad
-    string GetHandData()
+    List<List<float>>  CalculateROM(List<List<float>> MaxAngles, List<List<float>> MinAngles)
+    {
+        List<List<float>> ROM = new List<List<float>>();
+        for (int i = 0; i < MaxAngles.Count; i++)
+        {
+            List<float> row = new List<float>();
+            for (int j = 0; j < MaxAngles[0].Count; j++)
+            {
+                row.Add(0.0f);
+            }
+            ROM.Add(row);
+        }
+        
+        for (int i = 0; i < MaxAngles.Count; i++)
+        {
+            for (int j = 0; j < MaxAngles[0].Count; j++)
+            {
+                ROM[i][j] = MaxAngles[i][j] - MinAngles[i][j];
+            }
+        }
+        return ROM;
+    }
+
+    //Recognize Left or Right
+    (List<string> IDList, List<string> LRList, List<List<List<float>>> angleList) LeftOrRight()
     {
         string info;
         Hand _rightHand = Hands.Provider.GetHand(Chirality.Right);
         Hand _leftHand = Hands.Provider.GetHand(Chirality.Left);
 
+        List<string> _IDList = new List<string>();
+        List<string> _LRList = new List<string>();
+        List<List<List<float>>> _angleList = new List<List<List<float>>>();
+
         if (_rightHand != null && _leftHand != null)
         {
-            info = OnUpdateHand(_rightHand, "Right") + OnUpdateHand(_leftHand, "Left");
-            //cardNameText.text = info;
-            return info;
+            _IDList.Add(_rightHand.Id.ToString());
+            _IDList.Add(_leftHand.Id.ToString());
+
+            _LRList.Add("Right");
+            _LRList.Add("Left");
+
+            _angleList.Add(GetAngle(_rightHand));
+            _angleList.Add(ChangeToMinus(GetAngle(_leftHand)));
+
+            return (_IDList, _LRList, _angleList);
         }
 
         if (_rightHand != null && _leftHand == null)
         {
-            info = OnUpdateHand(_rightHand, "Right");
-            //cardNameText.text = info;
-            return info;
+            _IDList.Add(_rightHand.Id.ToString());
+            _LRList.Add("Right");
+            _angleList.Add(GetAngle(_rightHand));
+            return (_IDList, _LRList, _angleList);
         }
 
         if (_rightHand == null && _leftHand != null)
         {
-            info = OnUpdateHand(_leftHand, "Left");
-            //cardNameText.text = info;
-            return info;
+            _IDList.Add(_leftHand.Id.ToString());
+            _LRList.Add("Left");
+            _angleList.Add(ChangeToMinus(GetAngle(_leftHand)));
+            return (_IDList, _LRList, _angleList);
         }
 
         else//if (_rightHand == null && _leftHand == null)
         {
-            info = "NO HAND";
-            //cardNameText.text = info;
-            return info;
+            return (_IDList, _LRList, _angleList);
         }
     }
 
-    string OnUpdateHand(Hand _hand, string _WhichHand)
+    //Get Angles
+    List<List<float>> GetAngle(Hand _hand)
     {
-        //Use _hand to Explicitly get the specified finger and subsequent bone from it
-        Finger _thumb = _hand.GetThumb();
-        Finger _index = _hand.GetIndex();
-        Finger _middle = _hand.GetMiddle();
-        Finger _ring = _hand.GetRing();
-        Finger _pinky = _hand.GetPinky();
-        
-        //Use the _finger to subsequently get the Metacarpa bone from it using the BoneType Enum
-        Bone _thumbMetacarpal = _thumb.Bone(Bone.BoneType.TYPE_METACARPAL);
-        Bone _indexMetacarpal = _index.Bone(Bone.BoneType.TYPE_METACARPAL);
-        Bone _middleMetacarpal = _middle.Bone(Bone.BoneType.TYPE_METACARPAL);
-        Bone _ringMetacarpal = _ring.Bone(Bone.BoneType.TYPE_METACARPAL);
-        Bone _pinkyMetacarpal = _pinky.Bone(Bone.BoneType.TYPE_METACARPAL);
+        List<List<float>> angleList = new List<List<float>>();
 
-        Bone _thumbProximal = _thumb.Bone(Bone.BoneType.TYPE_PROXIMAL);
-        Bone _indexProximal = _index.Bone(Bone.BoneType.TYPE_PROXIMAL);
-        Bone _middleProximal = _middle.Bone(Bone.BoneType.TYPE_PROXIMAL);
-        Bone _ringProximal = _ring.Bone(Bone.BoneType.TYPE_PROXIMAL);
-        Bone _pinkyProximal = _pinky.Bone(Bone.BoneType.TYPE_PROXIMAL);
+        foreach (Finger finger in _hand.Fingers)
+        {
+            List<float> angles = new List<float>();
+            if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
+            {
+                Finger _thumb = _hand.Fingers[0];
+                Finger _index = _hand.Fingers[1];
+                angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
+                angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                for (int i = 1; i < 3; i++)
+                {
+                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                }
+                angles.Add(0.0f);
+            }
+            angleList.Add(angles); //the size of this list is [5][4]
+        }
+        return angleList;
+    }
 
-        Bone _thumbIntermediate = _thumb.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
-        Bone _indexIntermediate = _index.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
-        Bone _middleIntermediate = _middle.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
-        Bone _ringIntermediate = _ring.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
-        Bone _pinkyIntermediate = _pinky.Bone(Bone.BoneType.TYPE_INTERMEDIATE);
-
-        Bone _thumbDistal = _thumb.Bone(Bone.BoneType.TYPE_DISTAL);
-        Bone _indexDistal = _index.Bone(Bone.BoneType.TYPE_DISTAL);
-        Bone _middleDistal = _middle.Bone(Bone.BoneType.TYPE_DISTAL);
-        Bone _ringDistal = _ring.Bone(Bone.BoneType.TYPE_DISTAL);
-        Bone _pinkyDistal = _pinky.Bone(Bone.BoneType.TYPE_DISTAL);
-
-        LeapTransform _basis = _indexDistal.Basis;
-        Vector3 xBasis = _basis.xBasis;
-        string xBasisString = xBasis.ToString();
-
-        string _info = "WhichHand:" + _WhichHand + ", Hand ID: " + _hand.Id +   ", Angle:" + Vector3.Angle(_indexProximal.Direction, _indexMetacarpal.Direction) + "\n"
-            + ", SignedAngle:" + Vector3.SignedAngle(_indexProximal.Direction, _indexMetacarpal.Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n"
-            + ", radial/ulnar:" + Vector3.SignedAngle(_indexMetacarpal.Direction, _thumbProximal.Direction, _hand.PalmNormal) + ", palmar:" + Vector3.SignedAngle(_indexMetacarpal.Direction, _thumbProximal.Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n";
-
-        return _info;
+    //change left angles to minus
+    List<List<float>> ChangeToMinus(List<List<float>> angleList)
+    {
+        for (int i = 0; i < angleList.Count; i++)
+        {
+            for (int j = 0; j < angleList[0].Count; j++)
+            {
+                angleList[i][j] = angleList[i][j] * (-1);
+            }
+        }
+        return angleList;
     }
 }
