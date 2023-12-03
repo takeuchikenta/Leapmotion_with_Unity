@@ -14,6 +14,8 @@ public class TutorialPostProcessProvider : MonoBehaviour
     private TextMeshProUGUI MinText;
     [SerializeField]
     private TextMeshProUGUI MaxText;
+    [SerializeField]
+    private TextMeshProUGUI ROMText;
 
     public LeapProvider leapProvider;
 
@@ -28,20 +30,68 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
     void OnUpdateFrame(Frame frame)
     {
-        //cardNameText.text = LeftOrRight();
+        int ID;
+        string LR;
+        List<List<float>> Angles;
+        string info;
+
+        List<int> IDList = LeftOrRight().IDList;
+        List<string> LRList = LeftOrRight().LRList;
+        List<List<List<float>>> angleList = LeftOrRight().angleList;
+
+        if (IDList.Count == 2)
+        {
+            if (IDList[0] < IDList[1])
+            {
+                ID = IDList[0];
+                LR = LRList[0];
+                Angles = angleList[0];
+
+                info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
+            }
+            else
+            {
+                ID = IDList[1];
+                LR = LRList[1];
+                Angles = angleList[1];
+
+                info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
+            }
+        }
+        if(IDList.Count == 1)
+        {
+            ID = IDList[0];
+            LR = LRList[0];
+            Angles = angleList[0];
+
+            //experimenting
+            Hand _hand = Hands.Provider.GetHand(Chirality.Right);
+            Finger thumb = _hand.GetThumb();
+
+            info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n"
+                + "Thumb MCP(SignedAngle):" + Vector3.SignedAngle(thumb.bones[1].Direction, thumb.bones[2].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n"
+                + "Thumb MCP(Angle):" + Vector3.Angle(thumb.bones[1].Direction, thumb.bones[2].Direction)+"\n"
+                + "Thumb IP(SignedAngle):" + Vector3.SignedAngle(thumb.bones[2].Direction, thumb.bones[3].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n"
+                + "Thumb IP(Angle):" + Vector3.Angle(thumb.bones[2].Direction, thumb.bones[3].Direction) + "\n"
+                + "Thumb IP(SignedAngle):" + Vector3.SignedAngle(thumb.bones[2].Direction, thumb.bones[3].Direction, Vector3.Abs(Vector3.Cross(thumb.bones[2].Direction, thumb.bones[3].Direction)));
+        }
+        else
+        {
+            info = "NO HAND";
+        }
+        cardNameText.text = info;
     }
 
 
     //Button Setting
     int MinID;
     int MaxID;
-    string lr = "";
+    string lr;
     List<List<float>> MinAngles;
     List<List<float>> MaxAngles;
-
-    string FlexionOrExtension = "";
-    string Min = "";
-    string Max = "";
+    string Min;
+    string Max;
+    string FlexionOrExtension;
     List<List<float>> ROM;
 
     public void Flexion()
@@ -60,7 +110,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 lr = LRList[0];
                 MinAngles = angleList[0];
 
-                Min = lr + "ID:" + MinID + "Angles:" + MinAngles[0][0] + "\n";
+                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
             }
             else
             {
@@ -68,22 +118,27 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 lr = LRList[1];
                 MinAngles = angleList[1];
 
-                Min = lr + "ID:" + MinID + "Angles:" + MinAngles[0][0] + "\n";
+                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
             }
         }
-        else
+        if (IDList.Count == 1)
         {
             MinID = IDList[0];
             lr = LRList[0];
             MinAngles = angleList[0];
 
-            Min = lr + "ID:" + MinID + "Angles:" + MinAngles[0][0] + "\n";
+            Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+        }
+        else
+        {
+            Min = "NO HAND";
         }
         MinText.text = "Min:" + Min;
     }
 
     public void Save()
     {
+        string ROMValue;
         List<int> IDList = LeftOrRight().IDList;
         List<string> LRList = LeftOrRight().LRList;
         List<List<List<float>>> angleList = LeftOrRight().angleList;
@@ -96,7 +151,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 lr = LRList[0];
                 MaxAngles = angleList[0];
 
-                Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "\n";
+                Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
             }
             else
             {
@@ -104,14 +159,15 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 lr = LRList[1];
                 MaxAngles = angleList[1];
 
-                Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "\n";
+                Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
             }
 
             ROM = CalculateROM(MaxAngles, MinAngles);
 
-            Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "ROM:" + ROM[0][0] + "\n";
+            Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+            ROMValue = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
         }
-        else
+        if (IDList.Count == 1)
         {
             MaxID = IDList[0];
             lr = LRList[0];
@@ -119,9 +175,42 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
             ROM = CalculateROM(MaxAngles, MinAngles);
 
-            Max = lr + "ID:" + MaxID + "Angles:" + MaxAngles[0][0] + "ROM:" + ROM[0][0] + "\n";
+            Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+            ROMValue = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
         }
-        MaxText.text = "Min:" + Min + "Max:" + Max;
+        else
+        {
+            Max = "NO HAND";
+            ROMValue = "NO ROM";
+        }
+        MaxText.text = "Max:" + Max;
+        ROMText.text = "ROM:" + ROMValue;
+    }
+
+    string LineUpAngles(List<List<float>> Angles)
+    {
+        string AngleText = "";
+        List<string> FourFingersName = new List<string>() { "Index: ", "Middle: ", "Ring: ", "Pinky: "};
+        List<string> ThumbAngle = new List<string>() {"radial/ulnar: ", ", palmar: ", ", MCP: ", ", IP: "};
+        List<string> FourFingersAngle = new List<string>() {"MCP: ", ", PIP: ", ", DIP: "};
+
+        AngleText += "Thumb: ";
+        for (int j = 0; j < Angles[0].Count; j++)
+        {
+            AngleText += ThumbAngle[j] + Angles[0][j];
+        }
+        AngleText += "\n";
+        for (int i = 1; i < Angles.Count; i++)
+        {
+            AngleText += FourFingersName[i-1];
+            for (int j = 0; j < Angles[0].Count - 1 ; j++)
+            {
+                AngleText += FourFingersAngle[j] + Angles[i][j];
+            }
+            AngleText += "\n";
+        }
+
+        return AngleText;
     }
 
     //Calculate ROM
@@ -230,13 +319,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
     //change left angles to minus
     List<List<float>> ChangeToMinus(List<List<float>> angleList)
     {
-        for (int i = 0; i < angleList.Count; i++)
-        {
-            for (int j = 0; j < angleList[0].Count; j++)
-            {
-                angleList[i][j] = angleList[i][j] * (-1);
-            }
-        }
+        angleList[0][0] = angleList[0][0] * (-1);
         return angleList;
     }
 }
