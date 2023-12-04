@@ -16,8 +16,13 @@ public class TutorialPostProcessProvider : MonoBehaviour
     private TextMeshProUGUI MaxText;
     [SerializeField]
     private TextMeshProUGUI ROMText;
+    [SerializeField]
+    private TextMeshProUGUI FlexionOrExtensionText;
 
     public LeapProvider leapProvider;
+
+    string FlexionOrExtension = "flexion";
+    //FlexionOrExtensionText.text = "Flexion Mode";
 
     private void OnEnable()
     {
@@ -82,13 +87,13 @@ public class TutorialPostProcessProvider : MonoBehaviour
     List<List<float>> MaxAngles;
     string Min;
     string Max;
-    string FlexionOrExtension = "flexion";
     List<List<float>> ROM;
 
     //Flexion Button
     public void Flexion()
     {
         FlexionOrExtension = "flexion";
+        FlexionOrExtensionText.text = "Flexion Mode";
 
         List<int> IDList = LeftOrRight().IDList;
         List<string> LRList = LeftOrRight().LRList;
@@ -97,6 +102,49 @@ public class TutorialPostProcessProvider : MonoBehaviour
         if (IDList.Count == 2)
         {
             if(IDList[0] < IDList[1])
+            {
+                MinID = IDList[0];
+                lr = LRList[0];
+                MinAngles = angleList[0];
+
+                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+            }
+            else
+            {
+                MinID = IDList[1];
+                lr = LRList[1];
+                MinAngles = angleList[1];
+
+                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+            }
+        }
+        if (IDList.Count == 1)
+        {
+            MinID = IDList[0];
+            lr = LRList[0];
+            MinAngles = angleList[0];
+
+            Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+        }
+        else
+        {
+            Min = "NO HAND";
+        }
+        MinText.text = "Min:" + Min;
+    }
+
+    public void Extension()
+    {
+        FlexionOrExtension = "extension";
+        FlexionOrExtensionText.text = "Extension Mode";
+
+        List<int> IDList = LeftOrRight().IDList;
+        List<string> LRList = LeftOrRight().LRList;
+        List<List<List<float>>> angleList = LeftOrRight().angleList;
+
+        if (IDList.Count == 2)
+        {
+            if (IDList[0] < IDList[1])
             {
                 MinID = IDList[0];
                 lr = LRList[0];
@@ -231,7 +279,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         return ROM;
     }
 
-    //Recognize Left or Right
+    //Recognize Left or Right(Main Calculation)
     (List<int> IDList, List<string> LRList, List<List<List<float>>> angleList) LeftOrRight()
     {
         string info;
@@ -282,29 +330,56 @@ public class TutorialPostProcessProvider : MonoBehaviour
     List<List<float>> GetAngle(Hand _hand)
     {
         List<List<float>> angleList = new List<List<float>>();
+        string _FlexionOrExtension = FlexionOrExtension;
 
         foreach (Finger finger in _hand.Fingers)
         {
             List<float> angles = new List<float>();
-            if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
+            if (_FlexionOrExtension == "flexion")
             {
-                Finger _thumb = _hand.Fingers[0];
-                Finger _index = _hand.Fingers[1];
-                angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
-                angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
-                for (int i = 1; i < 3; i++)
+                if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
                 {
-                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
+                    Finger _thumb = _hand.Fingers[0];
+                    Finger _index = _hand.Fingers[1];
+                    angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
+                    angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                    for (int i = 1; i < 3; i++)
+                    {
+                        angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
+                    }
+                    angles.Add(0.0f);
                 }
             }
-            else
+            if(_FlexionOrExtension == "extension")
             {
-                for (int i = 0; i < 3; i++)
+                if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
                 {
-                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
+                    Finger _thumb = _hand.Fingers[0];
+                    Finger _index = _hand.Fingers[1];
+                    angles.Add(-Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
+                    angles.Add(-Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                    for (int i = 1; i < 3; i++)
+                    {
+                        angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
+                    }
                 }
-                angles.Add(0.0f);
+                else
+                {
+                    for (int i = 0; i < 3; i++)
+                    {
+                        angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
+                    }
+                    angles.Add(0.0f);
+                }
             }
+            
             angleList.Add(angles); //the size of this list is [5][4]
         }
         return angleList;
