@@ -183,8 +183,6 @@ public class TutorialPostProcessProvider : MonoBehaviour
     //Get Max Angles
     List<List<float>> GetMaxAngles(List<List<float>> Angles)
     {
-        
-
         for (int i = 0; i < Angles.Count; i++)
         {
             for (int j = 0; j < Angles[0].Count; j++)
@@ -201,8 +199,6 @@ public class TutorialPostProcessProvider : MonoBehaviour
     //Get Min Angles
     List<List<float>> GetMinAngles(List<List<float>> Angles)
     {
-        
-
         for (int i = 0; i < Angles.Count; i++)
         {
             for (int j = 0; j < Angles[0].Count; j++)
