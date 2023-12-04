@@ -63,17 +63,8 @@ public class TutorialPostProcessProvider : MonoBehaviour
             ID = IDList[0];
             LR = LRList[0];
             Angles = angleList[0];
-
-            //experimenting
-            Hand _hand = Hands.Provider.GetHand(Chirality.Right);
-            Finger thumb = _hand.GetThumb();
-
-            info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n"
-                + "Thumb MCP(SignedAngle):" + Vector3.SignedAngle(thumb.bones[1].Direction, thumb.bones[2].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n"
-                + "Thumb MCP(Angle):" + Vector3.Angle(thumb.bones[1].Direction, thumb.bones[2].Direction)+"\n"
-                + "Thumb IP(SignedAngle):" + Vector3.SignedAngle(thumb.bones[2].Direction, thumb.bones[3].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)) + "\n"
-                + "Thumb IP(Angle):" + Vector3.Angle(thumb.bones[2].Direction, thumb.bones[3].Direction) + "\n"
-                + "Thumb IP(SignedAngle):" + Vector3.SignedAngle(thumb.bones[2].Direction, thumb.bones[3].Direction, Vector3.Abs(Vector3.Cross(thumb.bones[2].Direction, thumb.bones[3].Direction)));
+           
+            info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
         }
         else
         {
@@ -91,9 +82,10 @@ public class TutorialPostProcessProvider : MonoBehaviour
     List<List<float>> MaxAngles;
     string Min;
     string Max;
-    string FlexionOrExtension;
+    string FlexionOrExtension = "flexion";
     List<List<float>> ROM;
 
+    //Flexion Button
     public void Flexion()
     {
         FlexionOrExtension = "flexion";
@@ -136,6 +128,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         MinText.text = "Min:" + Min;
     }
 
+    //Save Button
     public void Save()
     {
         string ROMValue;
@@ -187,6 +180,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         ROMText.text = "ROM:" + ROMValue;
     }
 
+    //Line up angles as string
     string LineUpAngles(List<List<float>> Angles)
     {
         string AngleText = "";
@@ -300,14 +294,14 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
                 for (int i = 1; i < 3; i++)
                 {
-                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
                 }
             }
             else
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                    angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
                 }
                 angles.Add(0.0f);
             }
