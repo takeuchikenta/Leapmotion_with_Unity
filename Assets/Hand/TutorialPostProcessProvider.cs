@@ -21,8 +21,38 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
     public LeapProvider leapProvider;
 
-    string FlexionOrExtension = "flexion";
-    //FlexionOrExtensionText.text = "Flexion Mode";
+    string FlexionOrExtension;
+
+    List<List<float>> MinAngles;
+    List<List<float>> MaxAngles;
+
+    void Start()
+    {
+        FlexionOrExtension = "Flexion Mode";
+        FlexionOrExtensionText.text = FlexionOrExtension;
+
+        MinAngles = new List<List<float>>();
+        MaxAngles = new List<List<float>>();
+
+        for (int i = 0; i < 5; i++)
+        {
+            List<float> row = new List<float>();
+            for (int j = 0; j < 4; j++)
+            {
+                row.Add(180.0f);
+            }
+            MinAngles.Add(row);
+        }
+        for (int i = 0; i < 5; i++)
+        {
+            List<float> row = new List<float>();
+            for (int j = 0; j < 4; j++)
+            {
+                row.Add(-180.0f);
+            }
+            MaxAngles.Add(row);
+        }
+    }
 
     private void OnEnable()
     {
@@ -32,13 +62,18 @@ public class TutorialPostProcessProvider : MonoBehaviour
     {
         leapProvider.OnUpdateFrame -= OnUpdateFrame;
     }
+    
 
     void OnUpdateFrame(Frame frame)
     {
         int ID;
         string LR;
         List<List<float>> Angles;
+        List<List<float>> ROM;
         string info;
+        string Min;
+        string Max;
+        string ROMValue;
 
         List<int> IDList = LeftOrRight().IDList;
         List<string> LRList = LeftOrRight().LRList;
@@ -51,16 +86,28 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 ID = IDList[0];
                 LR = LRList[0];
                 Angles = angleList[0];
+                MinAngles = GetMinAngles(Angles);
+                MaxAngles = GetMaxAngles(Angles);
+                ROM = CalculateROM(MaxAngles, MinAngles);
 
                 info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
+                Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+                Max = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+                ROMValue = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
             }
             else
             {
                 ID = IDList[1];
                 LR = LRList[1];
                 Angles = angleList[1];
+                MinAngles = GetMinAngles(Angles);
+                MaxAngles = GetMaxAngles(Angles);
+                ROM = CalculateROM(MaxAngles, MinAngles);
 
                 info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
+                Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+                Max = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+                ROMValue = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
             }
         }
         if(IDList.Count == 1)
@@ -68,164 +115,105 @@ public class TutorialPostProcessProvider : MonoBehaviour
             ID = IDList[0];
             LR = LRList[0];
             Angles = angleList[0];
-           
+            MinAngles = GetMinAngles(Angles);
+            MaxAngles = GetMaxAngles(Angles);
+            ROM = CalculateROM(MaxAngles, MinAngles);
+
             info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
+            Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
+            Max = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+            ROMValue = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
         }
         else
         {
             info = "NO HAND";
+            Min = "NO Min";
+            Max = "NO Max";
+            ROMValue = "NO ROM";
         }
-        cardNameText.text = info;
+        cardNameText.text = "Live:" + info;
+        MinText.text = "Min:" + Min;
+        MaxText.text = "Max:" + Max;
+        ROMText.text = "ROM:" + ROMValue;
     }
 
-
-    //Button Setting
-    int MinID;
-    int MaxID;
-    string lr;
-    List<List<float>> MinAngles;
-    List<List<float>> MaxAngles;
-    string Min;
-    string Max;
-    List<List<float>> ROM;
+    
 
     //Flexion Button
     public void Flexion()
     {
-        FlexionOrExtension = "flexion";
-        FlexionOrExtensionText.text = "Flexion Mode";
-
-        List<int> IDList = LeftOrRight().IDList;
-        List<string> LRList = LeftOrRight().LRList;
-        List<List<List<float>>> angleList = LeftOrRight().angleList;
-
-        if (IDList.Count == 2)
-        {
-            if(IDList[0] < IDList[1])
-            {
-                MinID = IDList[0];
-                lr = LRList[0];
-                MinAngles = angleList[0];
-
-                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
-            }
-            else
-            {
-                MinID = IDList[1];
-                lr = LRList[1];
-                MinAngles = angleList[1];
-
-                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
-            }
-        }
-        if (IDList.Count == 1)
-        {
-            MinID = IDList[0];
-            lr = LRList[0];
-            MinAngles = angleList[0];
-
-            Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
-        }
-        else
-        {
-            Min = "NO HAND";
-        }
-        MinText.text = "Min:" + Min;
+        Start();
+        FlexionOrExtension = "Flexion Mode";
+        FlexionOrExtensionText.text = FlexionOrExtension;
     }
 
     public void Extension()
     {
-        FlexionOrExtension = "extension";
-        FlexionOrExtensionText.text = "Extension Mode";
-
-        List<int> IDList = LeftOrRight().IDList;
-        List<string> LRList = LeftOrRight().LRList;
-        List<List<List<float>>> angleList = LeftOrRight().angleList;
-
-        if (IDList.Count == 2)
-        {
-            if (IDList[0] < IDList[1])
-            {
-                MinID = IDList[0];
-                lr = LRList[0];
-                MinAngles = angleList[0];
-
-                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
-            }
-            else
-            {
-                MinID = IDList[1];
-                lr = LRList[1];
-                MinAngles = angleList[1];
-
-                Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
-            }
-        }
-        if (IDList.Count == 1)
-        {
-            MinID = IDList[0];
-            lr = LRList[0];
-            MinAngles = angleList[0];
-
-            Min = "<" + lr + "> ID:" + MinID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
-        }
-        else
-        {
-            Min = "NO HAND";
-        }
-        MinText.text = "Min:" + Min;
+        Start();
+        FlexionOrExtension = "Extension Mode";
+        FlexionOrExtensionText.text = FlexionOrExtension;
     }
 
     //Save Button
     public void Save()
     {
-        string ROMValue;
-        List<int> IDList = LeftOrRight().IDList;
-        List<string> LRList = LeftOrRight().LRList;
-        List<List<List<float>>> angleList = LeftOrRight().angleList;
-
-        if (IDList.Count == 2)
+        if(FlexionOrExtension == "Flexion Mode")
         {
-            if (IDList[0] < IDList[1])
+
+        }
+        if(FlexionOrExtension == "Extension Mode")
+        {
+
+        }
+    }
+
+    //Reset Button
+    public void Reset()
+    {
+        if (FlexionOrExtension == "Flexion Mode")
+        {
+            Flexion();
+        }
+        if (FlexionOrExtension == "Extension Mode")
+        {
+            Extension();
+        }
+    }
+
+    //Get Max Angles
+    List<List<float>> GetMaxAngles(List<List<float>> Angles)
+    {
+        
+
+        for (int i = 0; i < Angles.Count; i++)
+        {
+            for (int j = 0; j < Angles[0].Count; j++)
             {
-                MaxID = IDList[0];
-                lr = LRList[0];
-                MaxAngles = angleList[0];
-
-                Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+                if(MaxAngles[i][j] < Angles[i][j])
+                {
+                    MaxAngles[i][j] = Angles[i][j];
+                }
             }
-            else
+        }
+        return MaxAngles;
+    }
+
+    //Get Min Angles
+    List<List<float>> GetMinAngles(List<List<float>> Angles)
+    {
+        
+
+        for (int i = 0; i < Angles.Count; i++)
+        {
+            for (int j = 0; j < Angles[0].Count; j++)
             {
-                MaxID = IDList[1];
-                lr = LRList[1];
-                MaxAngles = angleList[1];
-
-                Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
+                if (Angles[i][j] < MinAngles[i][j])
+                {
+                    MinAngles[i][j] = Angles[i][j];
+                }
             }
-
-            ROM = CalculateROM(MaxAngles, MinAngles);
-
-            Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
-            ROMValue = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
         }
-        if (IDList.Count == 1)
-        {
-            MaxID = IDList[0];
-            lr = LRList[0];
-            MaxAngles = angleList[0];
-
-            ROM = CalculateROM(MaxAngles, MinAngles);
-
-            Max = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(MaxAngles) + "\n";
-            ROMValue = "<" + lr + "> ID:" + MaxID + "\nAngles:\n" + LineUpAngles(ROM) + "\n";
-        }
-        else
-        {
-            Max = "NO HAND";
-            ROMValue = "NO ROM";
-        }
-        MaxText.text = "Max:" + Max;
-        ROMText.text = "ROM:" + ROMValue;
+        return MinAngles;
     }
 
     //Line up angles as string
@@ -335,7 +323,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         foreach (Finger finger in _hand.Fingers)
         {
             List<float> angles = new List<float>();
-            if (_FlexionOrExtension == "flexion")
+            if (_FlexionOrExtension == "Flexion Mode")
             {
                 if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
                 {
@@ -357,7 +345,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                     angles.Add(0.0f);
                 }
             }
-            if(_FlexionOrExtension == "extension")
+            if(_FlexionOrExtension == "Extension Mode")
             {
                 if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
                 {
