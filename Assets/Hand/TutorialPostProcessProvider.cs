@@ -5,6 +5,7 @@ using Leap;
 using Leap.Unity;
 //using UnityEngine.UI;
 using TMPro;
+using System.IO;
 
 public class TutorialPostProcessProvider : MonoBehaviour
 {
@@ -22,13 +23,16 @@ public class TutorialPostProcessProvider : MonoBehaviour
     public LeapProvider leapProvider;
 
     string FlexionOrExtension;
+    string LR;
 
     List<List<float>> MinAngles;
     List<List<float>> MaxAngles;
+    List<List<float>> ROM;
 
+    //Initialize Min and Max
     void Start()
     {
-        FlexionOrExtension = "Flexion Mode";
+        FlexionOrExtension = "flexion";
         FlexionOrExtensionText.text = FlexionOrExtension;
 
         MinAngles = new List<List<float>>();
@@ -67,9 +71,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
     void OnUpdateFrame(Frame frame)
     {
         int ID;
-        string LR;
         List<List<float>> Angles;
-        List<List<float>> ROM;
         string info;
         string Min;
         string Max;
@@ -143,25 +145,95 @@ public class TutorialPostProcessProvider : MonoBehaviour
     public void Flexion()
     {
         Start();
-        FlexionOrExtension = "Flexion Mode";
+        FlexionOrExtension = "flexion";
         FlexionOrExtensionText.text = FlexionOrExtension;
     }
 
     public void Extension()
     {
         Start();
-        FlexionOrExtension = "Extension Mode";
+        FlexionOrExtension = "extension";
         FlexionOrExtensionText.text = FlexionOrExtension;
     }
 
     //Save Button
     public void Save()
     {
-        if(FlexionOrExtension == "Flexion Mode")
+        string path = @"C:\HandtrackerUnity\Sample.csv";//Application.dataPath + @"\HandtrackerUnity\Sample.csv";
+
+        //create a directory if it does not exist
+        string directory = Path.GetDirectoryName(path);
+        if (!Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+        //create a path if it does not exist
+        if (!File.Exists(path))
+        {
+            using (File.Create(path)) {
+            }
+            string row = "Patient ID, handedness, flex./ext., , ";
+            List<string> FingersName = new List<string>() { "Thumb", "Index", "Middle", "Ring", "Pinky" };
+            List<string> ThumbAngle = new List<string>() { "radial/ulnar", "palmar", "MCP", "IP" };
+            List<string> FourFingersAngle = new List<string>() { "MCP", "PIP", "DIP" };
+            List<string> ROMMinMax = new List<string>() { "ROM", "Min", "Max" };
+            for (int j = 0; j < 4; j++)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    row += FingersName[0] + " " + ThumbAngle[j] + " " + ROMMinMax[k] + ",";
+                }
+
+            }
+            for (int i = 1; i < 5; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    for (int k = 0; k < 3; k++)
+                    {
+                        row += FingersName[i] + " " + FourFingersAngle[j] + " " + ROMMinMax[k] + ",";
+                    }
+                }
+
+            }
+            row += "\n";
+            //File.AppendAllText(path, row);
+            var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            StreamWriter sw = new StreamWriter(fs, false);
+            
+            sw.WriteLine(row);
+            sw.Close();
+
+        }
+        //add angles data
+        string dataRow = " ," + LR + "," + FlexionOrExtension + ", ,";
+        for (int j = 0; j < 4; j++) // "radial/ulnar", "palmar", "MCP", "IP" only in Thumb
+        {
+            dataRow += ROM[0][j] + "," + MinAngles[0][j] + "," + MaxAngles[0][j] + ",";
+
+        }
+        for (int i = 1; i < 5; i++) // "Index", "Middle", "Ring", "Pinky"
+        {
+            for (int j = 0; j < 3; j++) //"MCP", "PIP", "DIP"
+            {
+                dataRow += ROM[i][j] + "," + MinAngles[i][j] + "," + MaxAngles[i][j] + ",";
+            }
+
+        }
+        dataRow += "\n";
+        //File.AppendAllText(path, dataRow);
+        var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        StreamWriter sw = new StreamWriter(fs, true);
+
+        sw.WriteLine(dataRow);
+        sw.Close();
+
+
+        if (FlexionOrExtension == "flexion")
         {
 
         }
-        if(FlexionOrExtension == "Extension Mode")
+        if(FlexionOrExtension == "extension")
         {
 
         }
@@ -170,11 +242,11 @@ public class TutorialPostProcessProvider : MonoBehaviour
     //Reset Button
     public void Reset()
     {
-        if (FlexionOrExtension == "Flexion Mode")
+        if (FlexionOrExtension == "flexion")
         {
             Flexion();
         }
-        if (FlexionOrExtension == "Extension Mode")
+        if (FlexionOrExtension == "extension")
         {
             Extension();
         }
@@ -242,7 +314,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
     //Calculate ROM
     List<List<float>>  CalculateROM(List<List<float>> MaxAngles, List<List<float>> MinAngles)
     {
-        List<List<float>> ROM = new List<List<float>>();
+        List<List<float>> _ROM = new List<List<float>>();
         for (int i = 0; i < MaxAngles.Count; i++)
         {
             List<float> row = new List<float>();
@@ -250,17 +322,17 @@ public class TutorialPostProcessProvider : MonoBehaviour
             {
                 row.Add(0.0f);
             }
-            ROM.Add(row);
+            _ROM.Add(row);
         }
         
         for (int i = 0; i < MaxAngles.Count; i++)
         {
             for (int j = 0; j < MaxAngles[0].Count; j++)
             {
-                ROM[i][j] = MaxAngles[i][j] - MinAngles[i][j];
+                _ROM[i][j] = MaxAngles[i][j] - MinAngles[i][j];
             }
         }
-        return ROM;
+        return _ROM;
     }
 
     //Recognize Left or Right(Main Calculation)
@@ -319,7 +391,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         foreach (Finger finger in _hand.Fingers)
         {
             List<float> angles = new List<float>();
-            if (_FlexionOrExtension == "Flexion Mode")
+            if (_FlexionOrExtension == "flexion")
             {
                 if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
                 {
@@ -341,7 +413,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                     angles.Add(0.0f);
                 }
             }
-            if(_FlexionOrExtension == "Extension Mode")
+            if(_FlexionOrExtension == "extension")
             {
                 if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
                 {
@@ -369,7 +441,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         return angleList;
     }
 
-    //change left angles to minus
+    //change left radial/ulnar angles to minus
     List<List<float>> ChangeToMinus(List<List<float>> angleList)
     {
         angleList[0][0] = angleList[0][0] * (-1);
