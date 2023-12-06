@@ -5,6 +5,7 @@ using Leap;
 using Leap.Unity;
 //using UnityEngine.UI;
 using TMPro;
+using System;
 using System.IO;
 
 public class TutorialPostProcessProvider : MonoBehaviour
@@ -19,11 +20,14 @@ public class TutorialPostProcessProvider : MonoBehaviour
     private TextMeshProUGUI ROMText;
     [SerializeField]
     private TextMeshProUGUI FlexionOrExtensionText;
+    [SerializeField]
+    private TMP_InputField Field;
 
     public LeapProvider leapProvider;
 
     string FlexionOrExtension;
     string LR;
+    string patientID;
 
     List<List<float>> MinAngles;
     List<List<float>> MaxAngles;
@@ -90,7 +94,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 Angles = angleList[0];
                 MinAngles = GetMinAngles(Angles);
                 MaxAngles = GetMaxAngles(Angles);
-                ROM = CalculateROM(MaxAngles, MinAngles);
+                ROM = MaxAngles;//CalculateROM(MaxAngles, MinAngles);
 
                 info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
                 Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
@@ -104,7 +108,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 Angles = angleList[1];
                 MinAngles = GetMinAngles(Angles);
                 MaxAngles = GetMaxAngles(Angles);
-                ROM = CalculateROM(MaxAngles, MinAngles);
+                ROM = MaxAngles;//CalculateROM(MaxAngles, MinAngles);
 
                 info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
                 Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
@@ -119,7 +123,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
             Angles = angleList[0];
             MinAngles = GetMinAngles(Angles);
             MaxAngles = GetMaxAngles(Angles);
-            ROM = CalculateROM(MaxAngles, MinAngles);
+            ROM = MaxAngles;//CalculateROM(MaxAngles, MinAngles);
 
             info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
             Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
@@ -159,7 +163,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
     //Save Button
     public void Save()
     {
-        string path = @"C:\HandtrackerUnity\Sample.csv";//Application.dataPath + @"\HandtrackerUnity\Sample.csv";
+        string path = @"C:\HandtrackerUnity\" + patientID + ".csv";//Application.dataPath + @"\HandtrackerUnity\Sample.csv";
 
         //create a directory if it does not exist
         string directory = Path.GetDirectoryName(path);
@@ -172,7 +176,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
         {
             using (File.Create(path)) {
             }
-            string row = "Patient ID, handedness, flex./ext., , ";
+            string row = "Patient ID:" + patientID + ", handedness, flex./ext., , ";
             List<string> FingersName = new List<string>() { "Thumb", "Index", "Middle", "Ring", "Pinky" };
             List<string> ThumbAngle = new List<string>() { "radial/ulnar", "palmar", "MCP", "IP" };
             List<string> FourFingersAngle = new List<string>() { "MCP", "PIP", "DIP" };
@@ -197,16 +201,11 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
             }
             row += "\n";
-            //File.AppendAllText(path, row);
-            var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            StreamWriter sw = new StreamWriter(fs, false);
-            
-            sw.WriteLine(row);
-            sw.Close();
-
+            File.AppendAllText(path, row);
         }
         //add angles data
-        string dataRow = " ," + LR + "," + FlexionOrExtension + ", ,";
+        DateTime dt = DateTime.Now;
+        string dataRow = dt + "," + LR + "," + FlexionOrExtension + ", ,";
         for (int j = 0; j < 4; j++) // "radial/ulnar", "palmar", "MCP", "IP" only in Thumb
         {
             dataRow += ROM[0][j] + "," + MinAngles[0][j] + "," + MaxAngles[0][j] + ",";
@@ -221,21 +220,15 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
         }
         dataRow += "\n";
-        //File.AppendAllText(path, dataRow);
-        var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        StreamWriter sw = new StreamWriter(fs, true);
-
-        sw.WriteLine(dataRow);
-        sw.Close();
-
+        File.AppendAllText(path, dataRow);
 
         if (FlexionOrExtension == "flexion")
         {
-
+            Flexion();
         }
         if(FlexionOrExtension == "extension")
         {
-
+            Extension();
         }
     }
 
@@ -250,6 +243,11 @@ public class TutorialPostProcessProvider : MonoBehaviour
         {
             Extension();
         }
+    }
+
+    public void OnValueChanged()
+    {
+        patientID = Field.GetComponent<TMP_InputField>().text;
     }
 
     //Get Max Angles
