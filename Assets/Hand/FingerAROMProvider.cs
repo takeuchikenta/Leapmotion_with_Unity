@@ -8,10 +8,10 @@ using TMPro;
 using System;
 using System.IO;
 
-public class TutorialPostProcessProvider : MonoBehaviour
+public class FingerAROMProvider : MonoBehaviour
 {
     [SerializeField]
-    private TextMeshProUGUI cardNameText;
+    private TextMeshProUGUI LiveText;
     [SerializeField]
     private TextMeshProUGUI MinText;
     [SerializeField]
@@ -21,7 +21,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI FlexionOrExtensionText;
     [SerializeField]
-    private TMP_InputField Field;
+    private TMP_InputField inputField;
 
     public LeapProvider leapProvider;
 
@@ -94,7 +94,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 Angles = angleList[0];
                 MinAngles = GetMinAngles(Angles);
                 MaxAngles = GetMaxAngles(Angles);
-                ROM = MaxAngles;//CalculateROM(MaxAngles, MinAngles);
+                ROM = CalculateROM();
 
                 info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
                 Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
@@ -108,7 +108,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
                 Angles = angleList[1];
                 MinAngles = GetMinAngles(Angles);
                 MaxAngles = GetMaxAngles(Angles);
-                ROM = MaxAngles;//CalculateROM(MaxAngles, MinAngles);
+                ROM = CalculateROM();
 
                 info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
                 Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
@@ -123,7 +123,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
             Angles = angleList[0];
             MinAngles = GetMinAngles(Angles);
             MaxAngles = GetMaxAngles(Angles);
-            ROM = MaxAngles;//CalculateROM(MaxAngles, MinAngles);
+            ROM = CalculateROM();
 
             info = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(Angles) + "\n";
             Min = "<" + LR + "> ID:" + ID + "\nAngles:\n" + LineUpAngles(MinAngles) + "\n";
@@ -137,7 +137,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
             Max = "NO Max";
             ROMValue = "NO ROM";
         }
-        cardNameText.text = "Live:" + info;
+        LiveText.text = "Live:" + info;
         MinText.text = "Min:" + Min;
         MaxText.text = "Max:" + Max;
         ROMText.text = "ROM:" + ROMValue;
@@ -247,7 +247,7 @@ public class TutorialPostProcessProvider : MonoBehaviour
 
     public void OnValueChanged()
     {
-        patientID = Field.GetComponent<TMP_InputField>().text;
+        patientID = inputField.GetComponent<TMP_InputField>().text;
     }
 
     //Get Max Angles
@@ -310,27 +310,46 @@ public class TutorialPostProcessProvider : MonoBehaviour
     }
 
     //Calculate ROM
-    List<List<float>>  CalculateROM(List<List<float>> MaxAngles, List<List<float>> MinAngles)
+    List<List<float>> CalculateROM()
     {
+        string _FlexionOrExtension = FlexionOrExtension;
+        List<List<float>> _MinAngles = new List<List<float>>(MinAngles);
+        List<List<float>> _MaxAngles = new List<List<float>>(MaxAngles);
         List<List<float>> _ROM = new List<List<float>>();
-        for (int i = 0; i < MaxAngles.Count; i++)
+
+        for (int i = 0; i < 5; i++)
         {
             List<float> row = new List<float>();
-            for (int j = 0; j < MaxAngles[0].Count; j++)
+            for (int j = 0; j < 4; j++)
             {
                 row.Add(0.0f);
             }
             _ROM.Add(row);
         }
         
-        for (int i = 0; i < MaxAngles.Count; i++)
+
+        if (_FlexionOrExtension == "flexion")
         {
-            for (int j = 0; j < MaxAngles[0].Count; j++)
+            for (int i = 0; i < 5; i++)
             {
-                _ROM[i][j] = MaxAngles[i][j] - MinAngles[i][j];
+                for (int j = 0; j < 4; j++)
+                {
+                    _ROM[i][j] = _MinAngles[i][j] * (-1);
+                }
             }
+            return _ROM;
         }
-        return _ROM;
+        if (_FlexionOrExtension == "extension")
+        {
+            _ROM = _MaxAngles;
+            _ROM[0][0] = _MinAngles[0][0] * (-1);
+            _ROM[0][1] = _MinAngles[0][1] * (-1);
+            return _ROM;
+        }
+        else
+        {
+            return _ROM;
+        }
     }
 
     //Recognize Left or Right(Main Calculation)
@@ -389,51 +408,25 @@ public class TutorialPostProcessProvider : MonoBehaviour
         foreach (Finger finger in _hand.Fingers)
         {
             List<float> angles = new List<float>();
-            if (_FlexionOrExtension == "flexion")
+            if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
             {
-                if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
+                Finger _thumb = _hand.Fingers[0];
+                Finger _index = _hand.Fingers[1];
+                angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.yBasis)); //_hand.PalmNormal));
+                angles.Add(-Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.xBasis));//Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                for (int i = 1; i < 3; i++)
                 {
-                    Finger _thumb = _hand.Fingers[0];
-                    Finger _index = _hand.Fingers[1];
-                    angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
-                    angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
-                    for (int i = 1; i < 3; i++)
-                    {
-                        angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
-                    }
-                }
-                else
-                {
-                    for (int i = 0; i < 3; i++)
-                    {
-                        angles.Add(Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
-                    }
-                    angles.Add(0.0f);
+                    angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
                 }
             }
-            if(_FlexionOrExtension == "extension")
+            else
             {
-                if (finger.Type == 0)//_hand.Finger(finger.Id).FingerType.TYPE_THUMB)
+                for (int i = 0; i < 3; i++)
                 {
-                    Finger _thumb = _hand.Fingers[0];
-                    Finger _index = _hand.Fingers[1];
-                    angles.Add(-Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
-                    angles.Add(-Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
-                    for (int i = 1; i < 3; i++)
-                    {
-                        angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
-                    }
+                    angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
                 }
-                else
-                {
-                    for (int i = 0; i < 3; i++)
-                    {
-                        angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i].Basis.xBasis));
-                    }
-                    angles.Add(0.0f);
-                }
+                angles.Add(0.0f);
             }
-            
             angleList.Add(angles); //the size of this list is [5][4]
         }
         return angleList;
