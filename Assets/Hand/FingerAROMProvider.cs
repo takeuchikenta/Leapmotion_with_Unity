@@ -341,9 +341,21 @@ public class FingerAROMProvider : MonoBehaviour
         }
         if (_FlexionOrExtension == "extension")
         {
-            _ROM = _MaxAngles;
+            //_ROM = new List<List<float>>(_MaxAngles);
+            for (int j = 2; j < 4; j++)
+            {
+                _ROM[0][j] = _MaxAngles[0][j];
+            }
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    _ROM[i][j] = _MaxAngles[i][j];
+                }
+            }
             _ROM[0][0] = _MinAngles[0][0] * (-1);
             _ROM[0][1] = _MinAngles[0][1] * (-1);
+            
             return _ROM;
         }
         else
@@ -412,18 +424,18 @@ public class FingerAROMProvider : MonoBehaviour
             {
                 Finger _thumb = _hand.Fingers[0];
                 Finger _index = _hand.Fingers[1];
-                angles.Add(Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.yBasis)); //_hand.PalmNormal));
-                angles.Add(-Vector3.SignedAngle(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.xBasis));//Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                angles.Add(AngleOnPlane(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.yBasis)); //_hand.PalmNormal));
+                angles.Add(-AngleOnPlane(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.xBasis));//Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
                 for (int i = 1; i < 3; i++)
                 {
-                    angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
+                    angles.Add(-AngleOnPlane(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
                 }
             }
             else
             {
                 for (int i = 0; i < 3; i++)
                 {
-                    angles.Add(-Vector3.SignedAngle(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
+                    angles.Add(-AngleOnPlane(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
                 }
                 angles.Add(0.0f);
             }
@@ -437,5 +449,13 @@ public class FingerAROMProvider : MonoBehaviour
     {
         angleList[0][0] = angleList[0][0] * (-1);
         return angleList;
+    }
+
+    //Calculate angle on plane
+    float AngleOnPlane(Vector3 from, Vector3 to, Vector3 axis)
+    {
+        Vector3 fromOnPlane = Vector3.ProjectOnPlane(from, axis);
+        Vector3 toOnPlane = Vector3.ProjectOnPlane(to, axis);
+        return Vector3.SignedAngle(fromOnPlane, toOnPlane, axis);
     }
 }
