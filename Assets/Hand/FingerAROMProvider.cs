@@ -424,8 +424,8 @@ public class FingerAROMProvider : MonoBehaviour
             {
                 Finger _thumb = _hand.Fingers[0];
                 Finger _index = _hand.Fingers[1];
-                angles.Add(AngleOnPlane(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.yBasis)); //_hand.PalmNormal));
-                angles.Add(-AngleOnPlane(_index.bones[0].Direction, _thumb.bones[1].Direction, _index.bones[0].Basis.xBasis));//Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
+                angles.Add(-AngleOnPlane(_index.bones[0].Direction, _thumb.bones[1].Direction, _hand.PalmNormal));
+                angles.Add(-AngleOnPlane(_index.bones[0].Direction, _thumb.bones[1].Direction, Vector3.Cross(_hand.Direction, _hand.PalmNormal)));
                 for (int i = 1; i < 3; i++)
                 {
                     angles.Add(-AngleOnPlane(finger.bones[i].Direction, finger.bones[i + 1].Direction, finger.bones[i+1].Basis.xBasis));
